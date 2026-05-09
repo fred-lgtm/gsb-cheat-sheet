@@ -15,7 +15,7 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useMemo } = React;
+const { useState, useMemo, useEffect } = React;
 
 const data = [
   { trade: "PAINTING & MASONRY", item: "Masonry Paint — Brick", tiers: [{ label: "Below 8ft <2K SF", price: "$9.50/SF", rate: 9.50 }, { label: "Above 8ft <2K SF", price: "$13.60/SF", rate: 13.60 }, { label: "Below 8ft 2K–5K SF", price: "$8.75/SF", rate: 8.75 }, { label: "Above 8ft 2K–5K SF", price: "$12.51/SF", rate: 12.51 }, { label: "Below 8ft 5K+", price: "$7.95/SF", rate: 7.95 }, { label: "Above 8ft 5K+", price: "$11.37/SF", rate: 11.37 }], addOn: "+$0.85 pressure wash", min: "$500", rules: "2.5-story max · dormer +25% · sample included", source: "Sherwin / Loxon", emoji: "🧱", unit: "SF" },
@@ -46,13 +46,29 @@ const data = [
   { trade: "SIDING & EXTERIOR", item: "Dumpster Guide", tiers: [{ label: "Small (<$10K) 8–10 CY", price: "$275", rate: 275 }, { label: "Medium ($10–30K) 15–20 CY", price: "$425", rate: 425 }, { label: "Large (>$30K) 20–40 CY", price: "$600", rate: 600 }], addOn: "+$50–$100 deposit", min: "N/A", rules: "Match dumpster to job scope", source: "Local waste", emoji: "🗑️", unit: "ea" },
 ];
 
+const FAQ_DATA = [
+  { q: "How do we price masonry painting for brick vs brickface vs stucco?", a: "Each substrate has its own rate because surface texture affects coverage speed. Brickface is the most expensive (deepest texture, hardest to coat), then brick, then stucco (smoothest). All substrates split into Above 8ft and Below 8ft pricing — the above-8ft rate is 1.43× the below-8ft rate because of scaffold/ladder time.", from: "Marcin" },
+  { q: "What's the Above 8ft vs Below 8ft price difference and why?", a: "Above 8ft walls cost 43% more (×1.43 multiplier). This covers scaffold setup, ladder repositioning, slower production rate at height, and safety compliance. Samuel confirmed this split with $11.38 (above) / $7.95 (below) for stucco at 3K–4.5K SF tier.", from: "Marcin" },
+  { q: "How do we price stucco crack repairs?", a: "Two tiers by crack width: Minor (hairline, <1/16\") at $15.00/LF with $300 minimum. Moderate (1/16\"–3/8\") at $22.00/LF with $300–$400 minimum. Add $2.00/LF for color matching. Escalate anything wider than 3/8\" — do not quote on-site.", from: "Marcin (Part 2)" },
+  { q: "How to gauge 15%, 25% of damage and price the variations?", a: "Use the 5-step field gauge: (1) Stand 10–12ft back for overall assessment, (2) Tape a 10×10ft grid on the wall, (3) Count cracks: 0–2 = ~5%, 3–6 = ~15%, 7–10 = ~25%, >10 = escalate, (4) Measure crack width with a ruler, (5) Repeat in a second area, use the higher reading. Convert: Wall SF × damage% = estimated crack LF. Example: 2,000 SF wall × 20% = 400 LF × $22/LF = $8,800 base.", from: "Marcin (Part 2)" },
+  { q: "Are entry door prices labor only or do they include materials?", a: "Labor only. The $250 (single) through $700 (+transom) prices cover installation labor, flashing, and adjustment — 4 to 7 hours depending on opening size. Customer supplies the door, or we quote materials separately. Always clarify this upfront to avoid scope confusion.", from: "Marcin" },
+  { q: "How are siding products priced — per square or per SF?", a: "Both. We show Materials Only per square (100 SF bundle) for the wholesale cost, and Installed per SF for the full supply+labor sell price. Example: Cedar Max is $185/square for materials, but $10.50–$14.00/SF installed. The installed rate is what goes on the customer quote.", from: "Marcin" },
+  { q: "What discounts can I offer?", a: "Three stackable tiers: (1) 1-Year Warranty or 30-Day Close = −10% off base, (2) Day-Of Special = additional −3% on top of the −10%. Maximum combined discount = ~12.7%. Enter any base price in the Discount Calculator above to see exact dollar amounts.", from: "Marcin" },
+  { q: "What pressure levels for different substrates?", a: "Stucco: LOW pressure only — high risk of damage, require a signed waiver. Brick: MEDIUM pressure is safe, recommend sealer after. Vinyl: LOW pressure, never spray directly on seams. Concrete/asphalt: HIGH pressure is safe, seal for longevity.", from: "Marcin" },
+  { q: "When should I escalate instead of quoting on-site?", a: "Six triggers: (1) Damage >25% of wall area, (2) Any crack wider than 3/8\", (3) Diagonal/X cracks at window or door corners, (4) Bulging or delamination, (5) Water stains, rust, or exposed base coat, (6) Repeat cracking within 6 months of prior repair. Pause, photo-document, and call estimating.", from: "Marcin" },
+  { q: "How do I size a dumpster for a job?", a: "By project value: Small jobs (<$10K) = 8–10 CY at $275. Medium ($10–30K) = 15–20 CY at $425. Large (>$30K) = 20–40 CY at $600. Add $50–$100 refundable deposit. Damage waiver is optional.", from: "Marcin" },
+  { q: "What's the difference between Medusa coat and limewash?", a: "Medusa is a commercial-grade waterproofing system at $145/100SF — industrial strength, modern buildings. Limewash is a breathable, historic-appropriate finish at $85/100SF — best for older masonry, custom colors available. Both require surface prep (+$15–$25).", from: "Marcin" },
+];
+
 const TRADE_COLORS = {
   "PAINTING & MASONRY": { bg: "bg-blue-950", badge: "bg-blue-800 text-blue-100", border: "border-blue-700", tab: "bg-blue-900", hero: "from-blue-950 to-blue-900" },
   "POWER WASHING": { bg: "bg-cyan-950", badge: "bg-cyan-800 text-cyan-100", border: "border-cyan-700", tab: "bg-cyan-900", hero: "from-cyan-950 to-cyan-900" },
   "STONE VENEER": { bg: "bg-stone-900", badge: "bg-stone-700 text-stone-100", border: "border-stone-600", tab: "bg-stone-800", hero: "from-stone-900 to-stone-800" },
   "SIDING & EXTERIOR": { bg: "bg-orange-950", badge: "bg-orange-800 text-orange-100", border: "border-orange-700", tab: "bg-orange-900", hero: "from-orange-950 to-orange-900" },
+  "FAQ": { bg: "bg-violet-950", badge: "bg-violet-800 text-violet-100", border: "border-violet-700", tab: "bg-violet-900", hero: "from-violet-950 to-violet-900" },
 };
 const TRADES = [...new Set(data.map(d => d.trade))];
+const ALL_TABS = [...TRADES, "FAQ"];
 
 function HeroCard({ trade }) {
   const [sf, setSf] = useState(3200);
@@ -81,14 +97,14 @@ function HeroCard({ trade }) {
           <div className="bg-white/5 border border-white/15 rounded-lg p-3">
             <div className="text-yellow-400 text-[10px] font-bold tracking-wider uppercase">Below 8'</div>
             <div className="text-white text-xl font-black mt-1">${belowTier.rate.toFixed(2)}/SF</div>
-            <div className="text-white/80 text-sm mt-1 font-mono">{sf.toLocaleString()} × ${belowTier.rate.toFixed(2)} = <strong className="text-green-400">${(sf * belowTier.rate).toLocaleString()}</strong></div>
+            <div className="text-white/80 text-sm mt-1 font-mono">{sf.toLocaleString()} x ${belowTier.rate.toFixed(2)} = <strong className="text-green-400">${(sf * belowTier.rate).toLocaleString()}</strong></div>
           </div>
         )}
         {aboveTier && (
           <div className="bg-white/5 border border-white/15 rounded-lg p-3">
             <div className="text-yellow-400 text-[10px] font-bold tracking-wider uppercase">Above 8'</div>
             <div className="text-white text-xl font-black mt-1">${aboveTier.rate.toFixed(2)}/SF</div>
-            <div className="text-white/80 text-sm mt-1 font-mono">{sf.toLocaleString()} × ${aboveTier.rate.toFixed(2)} = <strong className="text-green-400">${(sf * aboveTier.rate).toLocaleString()}</strong></div>
+            <div className="text-white/80 text-sm mt-1 font-mono">{sf.toLocaleString()} x ${aboveTier.rate.toFixed(2)} = <strong className="text-green-400">${(sf * aboveTier.rate).toLocaleString()}</strong></div>
           </div>
         )}
       </div>
@@ -114,13 +130,13 @@ function DiscountCalc() {
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-center">
           <div className="text-[10px] text-gray-500 font-bold uppercase">1-Year / 30-Day</div>
-          <div className="text-green-400 font-mono font-black text-lg mt-1">${yr.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</div>
-          <div className="text-gray-600 text-[10px] mt-1">−10% = save ${(base - yr).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+          <div className="text-green-400 font-mono font-black text-lg mt-1">${yr.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+          <div className="text-gray-600 text-[10px] mt-1">-10% = save ${(base - yr).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
         </div>
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-center">
           <div className="text-[10px] text-gray-500 font-bold uppercase">Day-Of Special</div>
-          <div className="text-green-400 font-mono font-black text-lg mt-1">${day.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}</div>
-          <div className="text-gray-600 text-[10px] mt-1">−10% −3% = save ${(base - day).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+          <div className="text-green-400 font-mono font-black text-lg mt-1">${day.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
+          <div className="text-gray-600 text-[10px] mt-1">-10% -3% = save ${(base - day).toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
         </div>
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-center">
           <div className="text-[10px] text-gray-500 font-bold uppercase">Full Price</div>
@@ -138,7 +154,7 @@ function CrackCalcTable() {
   return (
     <div className="bg-amber-950/20 border border-amber-800/40 rounded-lg p-4 mt-3">
       <div className="flex items-center justify-between mb-3">
-        <div className="text-amber-400 text-[10px] font-black tracking-[2px] uppercase">Damage % → LF → Price Calculator</div>
+        <div className="text-amber-400 text-[10px] font-black tracking-[2px] uppercase">Damage % to LF to Price</div>
         <div className="flex items-center gap-2">
           <span className="text-gray-500 text-xs">Wall</span>
           <input type="number" value={wallSf} onChange={e => setWallSf(Number(e.target.value) || 0)}
@@ -149,165 +165,233 @@ function CrackCalcTable() {
       <div className="grid grid-cols-4 gap-2">
         {pcts.map(p => {
           const lf = Math.round(wallSf * p / 100);
-          const minor = lf * 15;
-          const mod = lf * 22;
           return (
             <div key={p} className="bg-gray-900/60 border border-gray-800 rounded-lg p-2 text-center">
               <div className="text-amber-400 font-black text-lg">{p}%</div>
               <div className="text-gray-400 text-[10px]">{lf.toLocaleString()} LF</div>
               <div className="border-t border-gray-800 mt-1 pt-1">
-                <div className="text-green-400 font-mono text-xs">${minor.toLocaleString()}</div>
+                <div className="text-green-400 font-mono text-xs">${(lf * 15).toLocaleString()}</div>
                 <div className="text-gray-600 text-[9px]">minor @$15</div>
               </div>
               <div className="border-t border-gray-800 mt-1 pt-1">
-                <div className="text-green-400 font-mono text-xs">${mod.toLocaleString()}</div>
+                <div className="text-green-400 font-mono text-xs">${(lf * 22).toLocaleString()}</div>
                 <div className="text-gray-600 text-[9px]">moderate @$22</div>
               </div>
             </div>
           );
         })}
       </div>
-      <div className="text-gray-500 text-[9px] mt-2 italic">Formula: Wall SF × damage% = est. crack LF · Escalate if &gt;25% or cracks &gt;3/8"</div>
+      <div className="text-gray-500 text-[9px] mt-2 italic">Formula: Wall SF x damage% = est. crack LF</div>
+    </div>
+  );
+}
+
+function FAQTab() {
+  const [openIdx, setOpenIdx] = useState(null);
+  const [newQ, setNewQ] = useState("");
+  const [logged, setLogged] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("gsb_faq_logged") || "[]"); } catch { return []; }
+  });
+
+  const submitQ = () => {
+    if (!newQ.trim()) return;
+    const updated = [...logged, { q: newQ.trim(), ts: new Date().toISOString() }];
+    setLogged(updated);
+    localStorage.setItem("gsb_faq_logged", JSON.stringify(updated));
+    setNewQ("");
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto px-6 pt-4">
+      <div className="bg-gradient-to-br from-violet-950 to-violet-900 rounded-xl p-5 mb-4 border border-white/10">
+        <div className="text-violet-300 text-[10px] font-bold tracking-[2px] uppercase">Field Reference</div>
+        <div className="text-white font-bold text-lg">Frequently Asked Questions</div>
+        <div className="text-white/60 text-xs mt-1">{FAQ_DATA.length} answered questions from Marcin's sessions</div>
+      </div>
+
+      <div className="space-y-2 mb-6">
+        {FAQ_DATA.map((faq, i) => (
+          <div key={i} className={`rounded-xl border transition-all overflow-hidden cursor-pointer
+            ${openIdx === i ? "border-violet-700 bg-gray-900 shadow-2xl" : "border-gray-800 bg-gray-900/50 hover:bg-gray-900 hover:border-gray-700"}`}
+            onClick={() => setOpenIdx(openIdx === i ? null : i)}>
+            <div className="flex items-start gap-3 px-5 py-4">
+              <div className="text-violet-400 font-black text-sm mt-0.5">Q{i + 1}</div>
+              <div className="flex-1">
+                <div className="font-bold text-white text-sm">{faq.q}</div>
+                <div className="text-[10px] text-gray-500 mt-1">Asked by {faq.from}</div>
+              </div>
+              <div className={`p-1.5 rounded-full ${openIdx === i ? 'bg-white/10 text-white' : 'text-gray-600'}`}>
+                {openIdx === i ? "▲" : "▼"}
+              </div>
+            </div>
+            {openIdx === i && (
+              <div className="border-t border-gray-800/50 px-5 py-4 bg-gray-900/80" onClick={e => e.stopPropagation()}>
+                <div className="text-sm text-gray-300 leading-relaxed whitespace-pre-line">{faq.a}</div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-5 mb-4">
+        <div className="text-[10px] text-gray-500 font-black tracking-[2px] uppercase mb-3">Have a question not listed here?</div>
+        <div className="flex gap-2">
+          <input type="text" value={newQ} onChange={e => setNewQ(e.target.value)} onKeyDown={e => e.key === "Enter" && submitQ()}
+            placeholder="Type your question..."
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30" />
+          <button onClick={submitQ} className="bg-violet-600 hover:bg-violet-500 text-white text-sm font-bold px-5 py-2.5 rounded-lg transition-colors">Log</button>
+        </div>
+      </div>
+
+      {logged.length > 0 && (
+        <div className="bg-yellow-950/20 border border-yellow-800/40 rounded-xl p-4">
+          <div className="text-[10px] text-yellow-400 font-black tracking-[2px] uppercase mb-2">Logged Questions ({logged.length}) — Pending Answers</div>
+          {logged.map((l, i) => (
+            <div key={i} className="flex justify-between items-center py-2 border-b border-gray-800/50 last:border-0">
+              <span className="text-sm text-gray-300">{l.q}</span>
+              <span className="text-[10px] text-gray-600 whitespace-nowrap ml-3">{new Date(l.ts).toLocaleDateString()}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function App() {
-  const [activeTrade, setActiveTrade] = useState(TRADES[0]);
+  const [activeTab, setActiveTab] = useState(ALL_TABS[0]);
   const [expandedItem, setExpandedItem] = useState(null);
   const [search, setSearch] = useState("");
+  const isFAQ = activeTab === "FAQ";
 
-  const filtered = useMemo(() => data.filter(d =>
-    d.trade === activeTrade &&
+  const filtered = useMemo(() => isFAQ ? [] : data.filter(d =>
+    d.trade === activeTab &&
     (search === "" || d.item.toLowerCase().includes(search.toLowerCase()) || d.rules.toLowerCase().includes(search.toLowerCase()))
-  ), [activeTrade, search]);
+  ), [activeTab, search, isFAQ]);
 
-  const c = TRADE_COLORS[activeTrade];
+  const c = TRADE_COLORS[activeTab] || TRADE_COLORS["FAQ"];
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-sans pb-24">
       <header className="sticky top-0 z-50 bg-gray-900/95 backdrop-blur-md border-b border-gray-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded">PRO</span>
               <p className="text-xs text-gray-500 uppercase tracking-widest">Garden State Brickface & Siding</p>
             </div>
             <h1 className="text-xl font-bold text-white tracking-tight">Sales Cheat Sheet — Master Reference</h1>
-            <p className="text-xs text-gray-400 mt-1">{data.length} items · 4 trades · v4.1</p>
+            <p className="text-xs text-gray-400 mt-1">{data.length} items · 4 trades · {FAQ_DATA.length} FAQs · v4.1</p>
           </div>
         </div>
       </header>
-      <nav className="bg-gray-900 border-b border-gray-800 sticky top-[88px] md:top-[76px] z-40">
+      <nav className="bg-gray-900 border-b border-gray-800 sticky top-[84px] md:top-[72px] z-40">
         <div className="max-w-5xl mx-auto flex gap-1 overflow-x-auto scrollbar-hide px-4">
-          {TRADES.map(t => {
-            const tc = TRADE_COLORS[t];
-            const count = data.filter(d => d.trade === t).length;
-            const isActive = activeTrade === t;
+          {ALL_TABS.map(t => {
+            const tc = TRADE_COLORS[t] || TRADE_COLORS["FAQ"];
+            const count = t === "FAQ" ? FAQ_DATA.length : data.filter(d => d.trade === t).length;
+            const isActive = activeTab === t;
             return (
-              <button key={t} onClick={() => { setActiveTrade(t); setExpandedItem(null); setSearch(""); }}
+              <button key={t} onClick={() => { setActiveTab(t); setExpandedItem(null); setSearch(""); }}
                 className={`flex items-center gap-2 px-5 py-3.5 text-xs font-bold whitespace-nowrap border-b-2 transition-all outline-none
                   ${isActive ? `border-blue-500 text-white ${tc.tab}` : "border-transparent text-gray-500 hover:text-gray-300 hover:bg-gray-800/50"}`}>
-                {t} <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/10' : 'bg-gray-800'}`}>{count}</span>
+                {t === "FAQ" ? "FAQ" : t}
+                <span className={`ml-1 text-[10px] px-1.5 py-0.5 rounded-full ${isActive ? 'bg-white/10' : 'bg-gray-800'}`}>{count}</span>
               </button>
             );
           })}
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 pt-4">
-        {/* HERO CARD */}
-        <HeroCard trade={activeTrade} />
-        {/* DISCOUNT CALC */}
-        <DiscountCalc />
-        {/* SEARCH */}
-        <div className="relative group mb-4">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
-          <input type="text" placeholder={`Search ${activeTrade.toLowerCase()} items...`} value={search} onChange={e => setSearch(e.target.value)}
-            className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-12 pr-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all shadow-xl" />
-        </div>
-      </div>
-
-      <main className="max-w-5xl mx-auto px-6 space-y-3">
-        {filtered.length === 0 ? (
-          <div className="text-center py-20 bg-gray-900/30 rounded-2xl border border-dashed border-gray-800">
-            <p className="text-gray-500 font-medium">No items matching your search</p>
-            <button onClick={() => setSearch("")} className="mt-2 text-blue-400 text-sm hover:underline">Clear</button>
+      {isFAQ ? <FAQTab /> : (
+        <>
+          <div className="max-w-5xl mx-auto px-6 pt-4">
+            <HeroCard trade={activeTab} />
+            <DiscountCalc />
+            <div className="relative group mb-4">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+              <input type="text" placeholder={`Search ${activeTab.toLowerCase()} items...`} value={search} onChange={e => setSearch(e.target.value)}
+                className="w-full bg-gray-900 border border-gray-800 rounded-xl pl-12 pr-4 py-3 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all shadow-xl" />
+            </div>
           </div>
-        ) : (
-          filtered.map((item, i) => {
-            const isOpen = expandedItem === i;
-            return (
-              <div key={i} className={`group rounded-xl border transition-all duration-200 overflow-hidden cursor-pointer
-                  ${isOpen ? `${c.border} bg-gray-900 shadow-2xl` : "border-gray-800 bg-gray-900/50 hover:bg-gray-900 hover:border-gray-700"}`}
-                onClick={() => setExpandedItem(isOpen ? null : i)}>
-                <div className={`flex items-start gap-4 px-5 py-4 ${isOpen ? `${c.bg}/40` : ""}`}>
-                  <div className="text-2xl w-11 h-11 rounded-lg flex items-center justify-center bg-gray-800 group-hover:scale-110 transition-transform">{item.emoji}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-white text-sm tracking-tight">{item.item}</h3>
-                      <div className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${c.badge}`}>{item.tiers[0].price}</div>
-                      {item.tiers.length > 1 && <span className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md uppercase font-bold">+{item.tiers.length - 1}</span>}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1 truncate">{item.rules}</div>
-                  </div>
-                  <div className={`p-1.5 rounded-full ${isOpen ? 'bg-white/10 text-white' : 'text-gray-600'}`}>{isOpen ? "▲" : "▼"}</div>
-                </div>
-                {isOpen && (
-                  <div className="border-t border-gray-800/50 p-5 bg-gray-900/80" onClick={e => e.stopPropagation()}>
-                    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-                      <div>
-                        <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Pricing Structure</div>
-                        <div className="space-y-1.5">
-                          {item.tiers.map((t, ti) => (
-                            <div key={ti} className="flex justify-between items-center bg-gray-800/50 border border-gray-700/30 rounded-lg px-3 py-2.5">
-                              <span className="text-sm text-gray-300">{t.label}</span>
-                              <span className="text-sm font-mono font-black text-green-400">{t.price}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="bg-yellow-950/20 border border-yellow-900/50 rounded-lg p-3">
-                            <div className="text-[10px] text-yellow-600 font-black uppercase mb-1">Add-On</div>
-                            <div className="text-xs font-bold text-yellow-300">{item.addOn}</div>
-                          </div>
-                          <div className="bg-orange-950/20 border border-orange-900/50 rounded-lg p-3">
-                            <div className="text-[10px] text-orange-600 font-black uppercase mb-1">Minimum</div>
-                            <div className="text-xs font-bold text-orange-300 font-mono">{item.min}</div>
-                          </div>
-                        </div>
-                        <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-3">
-                          <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Rules</div>
-                          <p className="text-sm text-gray-300 italic">"{item.rules}"</p>
-                          <div className="mt-2 text-right">
-                            <span className="text-[10px] text-gray-600 uppercase">Source: </span>
-                            <span className="text-xs text-blue-300">{item.source}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    {item.isCrackRepair && <CrackCalcTable />}
-                  </div>
-                )}
+          <main className="max-w-5xl mx-auto px-6 space-y-3">
+            {filtered.length === 0 ? (
+              <div className="text-center py-20 bg-gray-900/30 rounded-2xl border border-dashed border-gray-800">
+                <p className="text-gray-500 font-medium">No items matching your search</p>
+                <button onClick={() => setSearch("")} className="mt-2 text-blue-400 text-sm hover:underline">Clear</button>
               </div>
-            );
-          })
-        )}
-      </main>
+            ) : filtered.map((item, i) => {
+              const isOpen = expandedItem === i;
+              return (
+                <div key={i} className={`group rounded-xl border transition-all duration-200 overflow-hidden cursor-pointer
+                    ${isOpen ? `${c.border} bg-gray-900 shadow-2xl` : "border-gray-800 bg-gray-900/50 hover:bg-gray-900 hover:border-gray-700"}`}
+                  onClick={() => setExpandedItem(isOpen ? null : i)}>
+                  <div className={`flex items-start gap-4 px-5 py-4 ${isOpen ? `${c.bg}/40` : ""}`}>
+                    <div className="text-2xl w-11 h-11 rounded-lg flex items-center justify-center bg-gray-800 group-hover:scale-110 transition-transform">{item.emoji}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-bold text-white text-sm tracking-tight">{item.item}</h3>
+                        <div className={`text-xs px-2 py-0.5 rounded-full font-mono font-bold ${c.badge}`}>{item.tiers[0].price}</div>
+                        {item.tiers.length > 1 && <span className="text-[10px] bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded-md uppercase font-bold">+{item.tiers.length - 1}</span>}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1 truncate">{item.rules}</div>
+                    </div>
+                    <div className={`p-1.5 rounded-full ${isOpen ? 'bg-white/10 text-white' : 'text-gray-600'}`}>{isOpen ? "▲" : "▼"}</div>
+                  </div>
+                  {isOpen && (
+                    <div className="border-t border-gray-800/50 p-5 bg-gray-900/80" onClick={e => e.stopPropagation()}>
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                        <div>
+                          <div className="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-2">Pricing Structure</div>
+                          <div className="space-y-1.5">
+                            {item.tiers.map((t, ti) => (
+                              <div key={ti} className="flex justify-between items-center bg-gray-800/50 border border-gray-700/30 rounded-lg px-3 py-2.5">
+                                <span className="text-sm text-gray-300">{t.label}</span>
+                                <span className="text-sm font-mono font-black text-green-400">{t.price}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-yellow-950/20 border border-yellow-900/50 rounded-lg p-3">
+                              <div className="text-[10px] text-yellow-600 font-black uppercase mb-1">Add-On</div>
+                              <div className="text-xs font-bold text-yellow-300">{item.addOn}</div>
+                            </div>
+                            <div className="bg-orange-950/20 border border-orange-900/50 rounded-lg p-3">
+                              <div className="text-[10px] text-orange-600 font-black uppercase mb-1">Minimum</div>
+                              <div className="text-xs font-bold text-orange-300 font-mono">{item.min}</div>
+                            </div>
+                          </div>
+                          <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-3">
+                            <div className="text-[10px] text-gray-500 font-black uppercase mb-1">Rules</div>
+                            <p className="text-sm text-gray-300 italic">"{item.rules}"</p>
+                            <div className="mt-2 text-right">
+                              <span className="text-[10px] text-gray-600 uppercase">Source: </span>
+                              <span className="text-xs text-blue-300">{item.source}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      {item.isCrackRepair && <CrackCalcTable />}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </main>
+        </>
+      )}
 
       <footer className="fixed bottom-0 left-0 right-0 z-50 bg-gray-950/90 backdrop-blur-xl border-t border-gray-800 px-6 py-3">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           <div className="flex items-center gap-4 text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-            <span>⚠ Margin Enforcement Active</span>
-            <span className="hidden md:inline text-gray-700">•</span>
-            <span className="hidden md:inline">GSB v4.1</span>
-            <span className="hidden md:inline text-gray-700">•</span>
-            <span className="hidden md:inline">Above 8ft = Below 8ft × 1.43</span>
+            <span>GSB v4.1</span>
+            <span className="text-gray-700">|</span>
+            <span>Above 8ft = Below x 1.43</span>
           </div>
           <div className="bg-red-500/10 border border-red-500/30 px-4 py-1.5 rounded-full">
-            <span className="text-xs font-black text-red-400 tracking-tight">30% NET MARGIN FLOOR — NON-NEGOTIABLE</span>
+            <span className="text-xs font-black text-red-400 tracking-tight">30% NET MARGIN FLOOR</span>
           </div>
         </div>
       </footer>
