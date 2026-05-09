@@ -113,20 +113,60 @@ function HeroCard({ trade }) {
   );
 }
 
-function DiscountCalc() {
-  const [base, setBase] = useState(25440);
+function DiscountCalc({ trade }) {
+  const tradeItems = data.filter(d => d.trade === trade);
+  const rateItems = tradeItems.filter(d => d.tiers[0].rate > 0 && d.tiers[0].rate < 500);
+  const isPainting = trade === "PAINTING & MASONRY";
+
+  const defaultItem = rateItems[0];
+  const defaultUnit = defaultItem ? defaultItem.unit : "SF";
+  const defaultRate = defaultItem ? defaultItem.tiers[0].rate : 0;
+
+  const [qty, setQty] = useState(isPainting ? 0 : (defaultUnit === "SF" ? 2000 : 200));
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [manualBase, setManualBase] = useState(25440);
+
+  const selectedItem = rateItems[selectedIdx] || defaultItem;
+  const selectedRate = selectedItem ? selectedItem.tiers[0].rate : 0;
+  const unit = selectedItem ? selectedItem.unit : defaultUnit;
+
+  const isPerHundred = selectedRate < 1 && unit === "SF";
+  const effectiveRate = isPerHundred ? selectedRate : selectedRate;
+  const base = isPainting ? manualBase : qty * effectiveRate;
+
   const yr = base * 0.90;
   const day = base * 0.90 * 0.97;
+
   return (
     <div className="bg-green-950/30 border border-green-800/50 rounded-xl p-4 mb-4">
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-green-400 text-[10px] font-black tracking-[2px] uppercase">Discount Calculator</div>
-        <div className="flex items-center gap-2">
+      <div className="text-green-400 text-[10px] font-black tracking-[2px] uppercase mb-3">Discount Calculator</div>
+      {isPainting ? (
+        <div className="flex items-center gap-2 mb-3">
           <span className="text-gray-500 text-xs">Base $</span>
-          <input type="number" value={base} onChange={e => setBase(Number(e.target.value) || 0)}
+          <input type="number" value={manualBase} onChange={e => setManualBase(Number(e.target.value) || 0)}
             className="w-28 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-green-400 text-right font-mono font-bold focus:outline-none focus:ring-2 focus:ring-green-500/30" />
         </div>
-      </div>
+      ) : (
+        <div className="flex flex-col gap-2 mb-3">
+          <div className="flex items-center gap-2 flex-wrap">
+            <select value={selectedIdx} onChange={e => setSelectedIdx(Number(e.target.value))}
+              className="bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-sm text-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500/30 flex-1 min-w-0">
+              {rateItems.map((item, i) => (
+                <option key={i} value={i}>{item.item} — {item.tiers[0].price}</option>
+              ))}
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <input type="number" value={qty} onChange={e => setQty(Number(e.target.value) || 0)}
+              className="w-24 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-green-400 text-right font-mono font-bold focus:outline-none focus:ring-2 focus:ring-green-500/30" />
+            <span className="text-gray-400 text-xs font-bold">{unit}</span>
+            <span className="text-gray-600 text-xs">×</span>
+            <span className="text-green-400 font-mono text-sm font-bold">${isPerHundred ? (selectedRate * 100).toFixed(0) + "/100" + unit : selectedRate.toFixed(2) + "/" + unit}</span>
+            <span className="text-gray-600 text-xs">=</span>
+            <span className="text-white font-mono font-bold">${base.toLocaleString(undefined, {maximumFractionDigits: 0})}</span>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-center">
           <div className="text-[10px] text-gray-500 font-bold uppercase">1-Year / 30-Day</div>
@@ -140,7 +180,7 @@ function DiscountCalc() {
         </div>
         <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-3 text-center">
           <div className="text-[10px] text-gray-500 font-bold uppercase">Full Price</div>
-          <div className="text-gray-300 font-mono font-black text-lg mt-1">${base.toLocaleString()}</div>
+          <div className="text-gray-300 font-mono font-black text-lg mt-1">${base.toLocaleString(undefined, {maximumFractionDigits: 0})}</div>
           <div className="text-gray-600 text-[10px] mt-1">No discount</div>
         </div>
       </div>
@@ -307,7 +347,7 @@ function App() {
         <>
           <div className="max-w-5xl mx-auto px-6 pt-4">
             <HeroCard trade={activeTab} />
-            <DiscountCalc />
+            <DiscountCalc trade={activeTab} />
             <div className="relative group mb-4">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
               <input type="text" placeholder={`Search ${activeTab.toLowerCase()} items...`} value={search} onChange={e => setSearch(e.target.value)}
